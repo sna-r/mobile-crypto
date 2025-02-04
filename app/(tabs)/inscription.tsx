@@ -1,20 +1,35 @@
 import React, { useState } from 'react';
 
-const Connexion: React.FC = () => {
+const Inscription: React.FC = () => {
+  const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Gérer la soumission du formulaire ici (appel API, etc.)
-    console.log('Email:', email, 'Mot de passe:', password);
+    console.log('Nom:', nom, 'Email:', email, 'Mot de passe:', password, 'Role:', role);
   };
 
   return (
     <div className="form-container" style={styles.formContainer}>
       <div className="form-wrapper" style={styles.formWrapper}>
-        <h2 className="form-title" style={styles.formTitle}>Connexion</h2>
+        <h2 className="form-title" style={styles.formTitle}>Inscription</h2>
         <form onSubmit={handleSubmit}>
+          <div className="form-group" style={styles.formGroup}>
+            <label htmlFor="nom" className="form-label" style={styles.formLabel}>
+              Nom
+            </label>
+            <input
+              type="text"
+              id="nom"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className="form-input"
+              style={styles.formInput}
+            />
+          </div>
           <div className="form-group" style={styles.formGroup}>
             <label htmlFor="email" className="form-label" style={styles.formLabel}>
               Email
@@ -41,19 +56,24 @@ const Connexion: React.FC = () => {
               style={styles.formInput}
             />
           </div>
+          <div className="form-group" style={styles.formGroup}>
+            <label htmlFor="role" className="form-label" style={styles.formLabel}>
+              Rôle
+            </label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="form-input"
+              style={styles.formInput}
+            >
+              <option value="utilisateur">Utilisateur</option>
+              <option value="administrateur">Administrateur</option>
+            </select>
+          </div>
           <button type="submit" className="form-button" style={styles.formButton}>
-            Se connecter
+            S'inscrire
           </button>
-          <div className="form-footer" style={styles.formFooter}>
-            <a href="#" style={styles.formFooterLink}>
-              Mot de passe oublié ?
-            </a>
-          </div>
-          <div className="form-footer" style={styles.formFooter}>
-            <a href="/inscription" style={styles.formFooterLink}>
-              Créer un compte
-            </a>
-          </div>
         </form>
       </div>
     </div>
@@ -126,4 +146,4 @@ const styles = {
   },
 };
 
-export default Connexion;
+export default Inscription;
