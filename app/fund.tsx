@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 
 const TabPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
@@ -19,18 +19,26 @@ const TabPage: React.FC = () => {
     <View style={styles.container}>
       {/* Tab Buttons */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'deposit' && styles.activeTab]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.tabButton,
+            activeTab === 'deposit' && styles.activeTab,
+            pressed && styles.pressedTab,
+          ]}
           onPress={() => setActiveTab('deposit')}
         >
           <Text style={styles.tabText}>Deposit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'withdraw' && styles.activeTab]}
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            styles.tabButton,
+            activeTab === 'withdraw' && styles.activeTab,
+            pressed && styles.pressedTab,
+          ]}
           onPress={() => setActiveTab('withdraw')}
         >
           <Text style={styles.tabText}>Withdraw</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Content Based on Active Tab */}
@@ -41,15 +49,19 @@ const TabPage: React.FC = () => {
         <TextInput
           style={styles.input}
           placeholder="Amount"
-          keyboardType="numeric"
+          inputMode="decimal" // Use inputMode instead of keyboardType
           value={amount}
           onChangeText={setAmount}
         />
-        <Button
-          title={activeTab === 'deposit' ? 'Deposit' : 'Withdraw'}
+        <Pressable
+          style={[styles.confirmButton, amount.trim() === '' && styles.disabledButton]}
           onPress={handleConfirm}
-          disabled={amount.trim() === ''}
-        />
+          disabled={amount.trim() === ''} // Use disabled prop directly on Pressable
+        >
+          <Text style={styles.confirmButtonText}>
+            {activeTab === 'deposit' ? 'Deposit' : 'Withdraw'}
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -69,15 +81,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     backgroundColor: '#ddd',
-    textAlign: 'center',
     borderRadius: 5,
     marginHorizontal: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   activeTab: {
     backgroundColor: '#007bff',
   },
+  pressedTab: {
+    opacity: 0.6, // Visual feedback for press state
+  },
   tabText: {
-    textAlign: 'center',
     color: '#fff',
     fontWeight: 'bold',
   },
@@ -95,6 +110,19 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 20,
     borderRadius: 5,
+  },
+  confirmButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc', // Gray out when disabled
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 
