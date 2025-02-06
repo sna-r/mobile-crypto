@@ -30,6 +30,11 @@ export default function RootLayout() {
             <MaterialIcons name={focused ? 'import-export' : 'import-export'} color={color} size={24}/>
         ),
     }} />
+        <Tabs.Screen name="wallet" options={{ title: 'Portefeuille' ,
+            tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? 'wallet' : 'wallet-outline'} color={color} size={24}/>
+            ),
+        }} />
     <Tabs.Screen name="notification" options={{ title: 'Notifications' ,
       tabBarIcon: ({ color, focused }) => (
           <Ionicons name={focused ? 'notifications-circle' : 'notifications-circle-outline'} color={color} size={24}/>
