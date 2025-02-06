@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, useColorScheme , Dimensions} from 'react-native';
 
 const TabPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
@@ -93,6 +93,7 @@ const TabPage: React.FC = () => {
   );
 };
 
+const screenHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -101,6 +102,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 20,
+    marginTop: screenHeight * 0.1,
   },
   tabButton: {
     flex: 1,
