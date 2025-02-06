@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 // Sample static data for cryptocurrencies
@@ -38,33 +38,48 @@ const cryptoData = [
     },
   ];
 export default function Wallet(){
-    return <View style={styles.container}>
+        const colorScheme = useColorScheme(); // Detect system theme (dark or light)
+        const isDarkMode = colorScheme === 'dark'; // afaka ovaina ho dark sy light koa
+
+        // Define colors based on the system theme
+        const backgroundColor = isDarkMode ? '#1f2937' : '#ffffff';
+        const primaryTextColor = isDarkMode ? '#e5e7eb' : '#1f2937';
+        const secondaryTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
+        const accentColor = isDarkMode ? '#ffd33d' : '#007bff';
+        const cardBackgroundColor = isDarkMode ? '#25292e' : '#f9fafb';
+    return <View style={[styles.container, { backgroundColor }]}>
     {/* Main Balance Section */}
     <View style={styles.mainBalanceContainer}>
-      <Text style={styles.mainBalanceTitle}>Your Total Balance</Text>
-      <Text style={styles.mainBalanceAmount}>$15,012.34</Text>
-      <Text style={styles.mainBalanceSubtitle}>As of today</Text>
+      <Text style={[styles.mainBalanceTitle, { color: primaryTextColor }]}>Your Total Balance</Text>
+      <Text style={[styles.mainBalanceAmount, { color: accentColor }]}>$15,012.34</Text>
+      <Text style={[styles.mainBalanceSubtitle, { color: secondaryTextColor }]}>As of today</Text>
     </View>
 
     {/* Cryptocurrency Balances Section */}
     <View style={styles.cryptoBalancesContainer}>
-      <Text style={styles.sectionTitle}>Cryptocurrency Balances</Text>
+      <Text style={[styles.sectionTitle, { color: primaryTextColor }]}>Cryptocurrency Balances</Text>
       <FlatList
         data={cryptoData}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.cryptoItem}>
-            {/* Crypto Icon */}
-            <Image source={item.icon} style={styles.cryptoIcon} />
+          <View style={[styles.cryptoItem, { backgroundColor: cardBackgroundColor }]}>
+            {/* Crypto Icon (Remote URL) */}
+            <Image
+              source={{ uri: item.icon }}
+              style={styles.cryptoIcon}
+              resizeMode="contain"
+            />
             {/* Crypto Details */}
             <View style={styles.cryptoDetails}>
-              <Text style={styles.cryptoName}>{item.name} ({item.symbol})</Text>
-              <Text style={styles.cryptoBalance}>
+              <Text style={[styles.cryptoName, { color: primaryTextColor }]}>
+                {item.name} ({item.symbol})
+              </Text>
+              <Text style={[styles.cryptoBalance, { color: secondaryTextColor }]}>
                 Balance: {item.balance.toFixed(2)} {item.symbol}
               </Text>
             </View>
             {/* Value in USD */}
-            <Text style={styles.cryptoValue}>${item.valueInDollars.toFixed(2)}</Text>
+            <Text style={[styles.cryptoValue, { color: accentColor }]}>${item.valueInDollars.toFixed(2)}</Text>
           </View>
         )}
       />
@@ -75,7 +90,6 @@ export default function Wallet(){
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#1f2937',
       padding: 20,
     },
     mainBalanceContainer: {
@@ -83,25 +97,21 @@ const styles = StyleSheet.create({
       marginBottom: 20,
     },
     mainBalanceTitle: {
-      color: '#e5e7eb',
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: 5,
     },
     mainBalanceAmount: {
-      color: '#ffd33d',
       fontSize: 36,
       fontWeight: 'bold',
     },
     mainBalanceSubtitle: {
-      color: '#a1a1aa',
       fontSize: 14,
     },
     cryptoBalancesContainer: {
       marginTop: 20,
     },
     sectionTitle: {
-      color: '#e5e7eb',
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: 10,
@@ -111,29 +121,24 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       padding: 10,
       borderRadius: 8,
-      backgroundColor: '#25292e',
       marginBottom: 10,
     },
     cryptoIcon: {
       width: 30,
       height: 30,
       marginRight: 10,
-      resizeMode: 'contain',
     },
     cryptoDetails: {
       flex: 1,
     },
     cryptoName: {
-      color: '#e5e7eb',
       fontSize: 16,
       fontWeight: 'bold',
     },
     cryptoBalance: {
-      color: '#a1a1aa',
       fontSize: 14,
     },
     cryptoValue: {
-      color: '#3b82f6',
       fontSize: 16,
       fontWeight: 'bold',
     },
