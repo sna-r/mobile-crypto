@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
     },
     headerContainer: {
       marginBottom: 20,
+      marginTop: 20,
     },
     headerTitle: {
       fontSize: 20,

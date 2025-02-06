@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, useColorScheme , Dimensions} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 // Sample static data for cryptocurrencies
@@ -86,7 +86,7 @@ export default function Wallet(){
     </View>
   </View>
 }
-
+const screenHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
     mainBalanceContainer: {
       alignItems: 'center',
       marginBottom: 20,
+      marginTop: screenHeight * 0.1,
     },
     mainBalanceTitle: {
       fontSize: 18,
