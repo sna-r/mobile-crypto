@@ -28,7 +28,8 @@
       "favicon": "./assets/images/unus-sed-leo-leo-logo.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-facebook"
     ],
     "experiments": {
       "typedRoutes": true

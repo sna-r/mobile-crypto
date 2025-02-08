@@ -20,7 +20,7 @@ export default function RootLayout() {
             headerShown: false,
         }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Crypto',
+      <Tabs.Screen name="crypto" options={{ title: 'Crypto',
         tabBarIcon: ({ color, focused}) => (
             <Ionicons name={focused ? 'logo-bitcoin' : 'logo-bitcoin'} color={color} size={24} />
         ),
