@@ -1,32 +1,44 @@
+// TabPage.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, useColorScheme , Dimensions} from 'react-native';
+import { View, TextInput, Pressable, StyleSheet, Dimensions, Text } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
+import Notification from '@/components/crypto/Notification'; // Import the Notification component
 
 const TabPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState('');
-  const colorScheme = useColorScheme(); // Detect system theme (dark or light)
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const theme = useTheme();
 
   // Handle deposit or withdraw confirmation
   const handleConfirm = () => {
+    console.log('Input value:', amount);
     if (amount.trim() === '') {
-      alert('Please enter an amount.');
+      setNotification({ message: 'Please enter an amount.', type: 'error' });
       return;
     }
-    alert(`You have ${activeTab}ed $${amount}`);
+    const numericValue = parseFloat(amount);
+    if (isNaN(numericValue) || numericValue <= 0) {
+      setNotification({ message: 'Entrer une nombre valide.', type: 'error' });
+      return;
+    }
+
+    const action = activeTab === 'deposit' ? 'deposer' : 'retirer';
+    setNotification({ message: `Vous avez ${action} $${amount}`, type: 'success' });
     setAmount(''); // Clear the input after confirmation
   };
 
-  // Determine colors based on the system theme
-  
-  const isDarkMode = colorScheme === 'dark';//change to dark or light , still need a test on a device with dark or light mode
-  const backgroundColor = isDarkMode ? '#1f2937' : '#ffffff';
-  const textColor = isDarkMode ? '#e5e7eb' : '#1f2937';
-  const borderColor = isDarkMode ? '#374151' : '#d1d5db';
-  const buttonColor = isDarkMode ? '#3b82f6' : '#007bff';
-  const placeholderTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
-
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {/* Notification */}
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)} // Hide the notification
+        />
+      )}
+
       {/* Tab Buttons */}
       <View style={styles.tabContainer}>
         <Pressable
@@ -34,52 +46,52 @@ const TabPage: React.FC = () => {
             styles.tabButton,
             activeTab === 'deposit' && styles.activeTab,
             pressed && styles.pressedTab,
-            { backgroundColor: activeTab === 'deposit' ? buttonColor : borderColor },
+            { backgroundColor: activeTab === 'deposit' ? theme.buttonColor : theme.borderColor },
           ]}
           onPress={() => setActiveTab('deposit')}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'deposit' ? '#ffffff' : textColor }]}>Dépôt</Text>
+          <Text style={[styles.tabText, { color: activeTab === 'deposit' ? '#ffffff' : theme.textColor }]}>Dépôt</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
             styles.tabButton,
             activeTab === 'withdraw' && styles.activeTab,
             pressed && styles.pressedTab,
-            { backgroundColor: activeTab === 'withdraw' ? buttonColor : borderColor },
+            { backgroundColor: activeTab === 'withdraw' ? theme.buttonColor : theme.borderColor },
           ]}
           onPress={() => setActiveTab('withdraw')}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'withdraw' ? '#ffffff' : textColor }]}>Retrait</Text>
+          <Text style={[styles.tabText, { color: activeTab === 'withdraw' ? '#ffffff' : theme.textColor }]}>Retrait</Text>
         </Pressable>
       </View>
 
       {/* Content Based on Active Tab */}
-      <View style={[styles.contentContainer, { backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', borderColor }]}>
+      <View style={[styles.contentContainer, { backgroundColor: theme.isDarkMode ? '#1f2937' : '#ffffff' }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: textColor }]}>
+          <Text style={[styles.title, { color: theme.textColor }]}>
             {activeTab === 'deposit' ? 'Dépôt' : 'Retrait'}
           </Text>
-          <Text style={[styles.subtitle, { color: placeholderTextColor }]}>
+          <Text style={[styles.subtitle, { color: theme.placeholderTextColor }]}>
             {activeTab === 'deposit'
               ? 'Ajouter des fonds à votre compte'
               : 'Retirer des fonds de votre compte'}
           </Text>
         </View>
         <View style={styles.formContainer}>
-          <Text style={[styles.label, { color: textColor }]}>Montant</Text>
+          <Text style={[styles.label, { color: theme.textColor }]}>Montant</Text>
           <TextInput
             style={[
               styles.input,
-              { borderColor: isDarkMode ? '#374151' : '#d1d5db', backgroundColor: isDarkMode ? '#374151' : '#ffffff' },
+              { borderColor: theme.isDarkMode ? '#374151' : '#d1d5db', backgroundColor: theme.isDarkMode ? '#374151' : '#ffffff' },
             ]}
             placeholder="Entrer le montant"
-            placeholderTextColor={placeholderTextColor}
+            placeholderTextColor={theme.placeholderTextColor}
             inputMode="decimal"
             value={amount}
             onChangeText={setAmount}
           />
           <Pressable
-            style={[styles.confirmButton, { backgroundColor: buttonColor }]}
+            style={[styles.confirmButton, { backgroundColor: theme.buttonColor }]}
             onPress={handleConfirm}
             disabled={amount.trim() === ''}
           >
@@ -94,6 +106,7 @@ const TabPage: React.FC = () => {
 };
 
 const screenHeight = Dimensions.get('window').height;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

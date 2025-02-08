@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme';
 
 interface Crypto {
   id: string;
@@ -15,7 +16,7 @@ interface Crypto {
 const CryptoListScreen = () => {
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const router = useRouter();
-
+  const theme = useTheme();
   useEffect(() => {
     const fetchCryptos = async () => {
       try {
@@ -36,7 +37,7 @@ const CryptoListScreen = () => {
       style={styles.item}
       onPress={() => router.push(`/crypto/${item.id}`)} // Navigate to the detail screen
     >
-      <View style={styles.row}>
+      <View style={[styles.row]}>
         <Text style={styles.name}>{item.name} ({item.symbol.toUpperCase()})</Text>
         <Text style={styles.price}>${item.current_price.toFixed(2)}</Text>
       </View>
@@ -47,7 +48,7 @@ const CryptoListScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,{backgroundColor: theme.backgroundColor}]}>
       <FlatList
         data={cryptos}
         keyExtractor={(item) => item.id}

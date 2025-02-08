@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { LineChart } from 'react-native-chart-kit';
 import { useLocalSearchParams } from 'expo-router';
+import { useTheme } from '@/hooks/useTheme';
 
 interface CryptoDetail {
   name: string;
@@ -24,6 +25,7 @@ const CryptoDetailScreen = () => {
   const [historicalData, setHistoricalData] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+    const theme= useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,7 +68,7 @@ const CryptoDetailScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer,{backgroundColor: theme.backgroundColor}]}>
         <ActivityIndicator size="large" color="#ffffff" />
         <Text style={styles.loadingText}>Loading crypto details...</Text>
       </View>
@@ -95,7 +97,7 @@ const CryptoDetailScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,{backgroundColor: theme.backgroundColor}]}>
       <Text style={styles.title}>{cryptoDetail.name} ({cryptoDetail.symbol.toUpperCase()})</Text>
       <Text style={styles.price}>Price: ${cryptoDetail.market_data.current_price.usd.toFixed(2)}</Text>
       <Text

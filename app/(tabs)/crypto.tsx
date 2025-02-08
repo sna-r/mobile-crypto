@@ -1,8 +1,10 @@
 // app/(tabs)/crypto.tsx
 import { Stack } from 'expo-router';
 import CryptoListScreen from '@/components/crypto/CryptoListScreen';
+import { useTheme } from '@/hooks/useTheme';
 
 const Crypto = () => {
+    const theme = useTheme();
   return (
     <>
       {/* Define the stack navigator */}
