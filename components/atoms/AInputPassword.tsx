@@ -8,6 +8,7 @@ interface AInputPasswordProps {
   placeholder?: string;
   value: string;
   onChangeText: (text: string) => void;
+  defaultValue?: string | undefined;
 }
 
 const AInputPassword: React.FC<AInputPasswordProps> = ({
@@ -15,6 +16,7 @@ const AInputPassword: React.FC<AInputPasswordProps> = ({
   placeholder,
   value,
   onChangeText,
+  defaultValue,
 }) => {
   const [secureText, setSecureText] = useState(true);
   const colors = useThemeColors(); // Gestion des couleurs dynamiques
@@ -30,6 +32,7 @@ const AInputPassword: React.FC<AInputPasswordProps> = ({
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureText}
+          defaultValue={defaultValue}
         />
         <TouchableOpacity onPress={() => setSecureText(!secureText)} style={styles.icon}>
           <Ionicons name={secureText ? "eye-off" : "eye"} size={22} color={colors.grayMedium} />

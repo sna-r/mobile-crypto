@@ -1,119 +1,176 @@
-// components/CryptoListScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { FlatList, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-import axios from 'axios';
-import { useRouter } from 'expo-router';
-import { useTheme } from '@/hooks/useTheme';
+import { FlatList, Text, View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { db } from '@/config/firebaseConfig';
+import { router } from "expo-router";
 
 interface Crypto {
   id: string;
   name: string;
   symbol: string;
-  current_price: number;
-  price_change_percentage_24h: number;
+  imageUrl: string;
 }
 
-const CryptoListScreen = () => {
+interface PriceHistory {
+  cryptoId: string | number;
+  close: number;
+  change: number;
+  recordDate: any;
+}
+
+interface LatestPrice {
+  close: number;
+  change: number;
+  recordDate: any;
+}
+
+export default function CryptoListScreen() {
+  const [loading, setLoading] = useState<boolean>(true);
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
-  const router = useRouter();
-  const theme = useTheme();
+  const [prices, setPrices] = useState<Record<string, LatestPrice>>({});
+
+  const backgroundColor = '#ffffff';
+  const primaryTextColor = '#1f2937';
+  const cardBackgroundColor = '#f9fafb';
+
   useEffect(() => {
     const fetchCryptos = async () => {
       try {
-        const response = await axios.get(
-          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false'
-        );
-        setCryptos(response.data);
+        const querySnapshot = await getDocs(collection(db, 'cryptos'));
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Crypto[];
+        setCryptos(data);
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchCryptos();
+  }, []);
+
+  useEffect(() => {
+    const fetchPrices = () => {
+      const unsubscribe = onSnapshot(collection(db, 'priceHistory'), (snapshot) => {
+        const latestPrices: Record<string, LatestPrice> = {};
+        snapshot.forEach(doc => {
+          const data = doc.data() as PriceHistory;
+          const cryptoId = String(data.cryptoId);
+          if (!latestPrices[cryptoId]) {
+            latestPrices[cryptoId] = { close: data.close, change: data.change, recordDate: data.recordDate };
+          } else {
+            const currentTimestamp = latestPrices[cryptoId].recordDate.toMillis();
+            const newTimestamp = data.recordDate.toMillis();
+            if (newTimestamp > currentTimestamp) {
+              latestPrices[cryptoId] = { close: data.close, change: data.change, recordDate: data.recordDate };
+            }
+          }
+        });
+        setPrices(latestPrices);
+      }, error => {
+        console.error('Erreur lors de l\'écoute de priceHistory:', error);
+      });
+      return () => unsubscribe();
+    };
+
+    fetchPrices(); // Fetch prices immediately on mount
+
+    const intervalId = setInterval(fetchPrices, 60000); // Fetch prices every 60 seconds
+
+    return () => clearInterval(intervalId); // Cleanup interval on unmount
   }, []);
 
   const renderItem = ({ item }: { item: Crypto }) => (
     <TouchableOpacity
-      style={styles.item}
-      onPress={() => router.push(`/crypto/${item.id}`)} // Navigate to the detail screen
-    >
-      <View style={[styles.row]}>
-        <Text style={styles.name}>{item.name} ({item.symbol.toUpperCase()})</Text>
-        <Text style={styles.price}>${item.current_price.toFixed(2)}</Text>
+      onPress={() => router.push(`/crypto/${item.id}`)}
+      style={[styles.cryptoItem, {
+        backgroundColor: cardBackgroundColor,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+        marginHorizontal: 20,
+      }]}>
+      <Image source={{ uri: item.imageUrl }} style={styles.cryptoIcon} resizeMode="contain" />
+      <View style={styles.cryptoDetails}>
+        <Text style={[styles.cryptoName, { color: primaryTextColor }]}>
+          {item.name} ({item.symbol ? item.symbol.toUpperCase() : 'N/A'})
+        </Text>
+        <Text style={[styles.cryptoValue, { color: primaryTextColor }]}>
+          {prices[item.id] ? `$${prices[item.id].close.toFixed(2)}` : 'Prix indisponible'}
+        </Text>
       </View>
-      <Text style={[styles.variation, item.price_change_percentage_24h > 0 ? styles.up : styles.down]}>
-        {item.price_change_percentage_24h.toFixed(2)}%
-      </Text>
+      {prices[item.id] && (
+        <Text style={[
+          styles.cryptoChange,
+          { color: prices[item.id].change >= 0 ? 'green' : 'red' }
+        ]}>
+          {prices[item.id].change >= 0 ? '+' : ''}{prices[item.id].change.toFixed(2)}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={{ color: '#292929' }}>Chargement...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <View style={[styles.container,{backgroundColor: theme.backgroundColor}]}>
+    <SafeAreaView style={[{ backgroundColor }]}>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', color: primaryTextColor, paddingLeft: 20 }}>
+        Cryptos
+      </Text>
       <FlatList
+        style={{ paddingTop: 20 }}
         data={cryptos}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent} // Center the list items
+        contentContainerStyle={styles.listContent}
       />
-    </View>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#121212', // Dark mode background
-    alignItems: 'center', // Center the content horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContent: {
-    flexGrow: 1,
-    justifyContent: 'center', // Center items vertically if there's extra space
-    padding: 16,
+    paddingBottom: 20,
   },
-  item: {
-    flexDirection: 'column', // Stack elements vertically
-    justifyContent: 'center',
-    alignItems: 'center', // Center elements horizontally
-    padding: 16,
-    marginVertical: 8,
-    backgroundColor: '#1E1E1E', // Dark mode card background
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-    width: '100%', // Ensure cards take up the full width
-  },
-  row: {
+  cryptoItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%', // Ensure rows span the full width of the card
-    marginBottom: 8,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
   },
-  name: {
+  cryptoIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  cryptoDetails: {
+    flex: 1,
+  },
+  cryptoName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#ffffff', // White text for dark mode
-    flex: 1, // Allow name to take up available space
   },
-  price: {
-    fontSize: 16,
-    color: '#ffffff', // White text for dark mode
-    marginLeft: 8, // Add spacing between name and price
-  },
-  variation: {
+  cryptoValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    alignSelf: 'flex-end', // Align variation to the right
   },
-  up: {
-    color: '#00ff00', // Green for positive change
-  },
-  down: {
-    color: '#ff0000', // Red for negative change
+  cryptoChange: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 10,
   },
 });
-
-export default CryptoListScreen;

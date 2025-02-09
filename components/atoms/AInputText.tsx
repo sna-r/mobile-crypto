@@ -8,6 +8,7 @@ interface AInputTextProps {
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
+  defaultValue?: string;
 }
 
 const AInputText: React.FC<AInputTextProps> = ({
@@ -16,6 +17,7 @@ const AInputText: React.FC<AInputTextProps> = ({
   value,
   onChangeText,
   secureTextEntry = false,
+  defaultValue=""
 }) => {
   const colors = useThemeColors(); // Gestion des couleurs dynamiques
 
@@ -29,6 +31,7 @@ const AInputText: React.FC<AInputTextProps> = ({
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
+        defaultValue={defaultValue}
       />
     </View>
   );

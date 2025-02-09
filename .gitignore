@@ -47,3 +47,5 @@ ios
 expo-env.d.ts
 config/firebaseConfig.js
 # @end expo-cli
+
+/.idea

@@ -1,76 +1,75 @@
-// app/(tabs)/crypto/[cryptoId].tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import axios from 'axios';
+import { View, Text, StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { db } from '@/config/firebaseConfig';
 
-interface CryptoDetail {
-  name: string;
-  symbol: string;
-  market_data: {
-    current_price: { usd: number };
-    price_change_percentage_24h: number;
-  };
-}
-
-interface HistoricalData {
-  prices: [number, number][];
+interface PriceHistory {
+  change: number;
+  close: number;
+  cryptoId: number;
+  high: number;
+  low: number;
+  open: number;
+  recordDate: string;
 }
 
 const CryptoDetailScreen = () => {
   const { cryptoId } = useLocalSearchParams<{ cryptoId: string }>();
-  const [cryptoDetail, setCryptoDetail] = useState<CryptoDetail | null>(null);
-  const [historicalData, setHistoricalData] = useState<number[]>([]);
+  const [historicalData, setHistoricalData] = useState<PriceHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-    const theme= useTheme();
+  const theme = useTheme();
+
+  const fetchHistoricalData = async () => {
+    try {
+      // Convert cryptoId to a number:
+      const numericCryptoId = Number(cryptoId);
+
+      if (isNaN(numericCryptoId)) {
+        throw new Error("Invalid cryptoId: Not a number");
+      }
+
+      const q = query(
+        collection(db, 'priceHistory'),
+        where('cryptoId', '==', numericCryptoId) // Use the numeric ID
+      );
+
+      const querySnapshot = await getDocs(q);
+      const data: PriceHistory[] = querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        cryptoId: doc.data().cryptoId, // Ensure cryptoId is a number when mapping
+      } as PriceHistory));
+
+      setHistoricalData(data);
+    } catch (err: any) {
+      console.error('Erreur lors de la récupération des données:', err.message);
+      setError('Échec du chargement des données. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+    // Initial data fetch
+    fetchHistoricalData();
 
-        // Fetch crypto details
-        const detailResponse = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/${cryptoId}?tickers=false&market_data=true&community_data=false&developer_data=false`
-        );
+    // Set up interval to refresh data every 60 seconds
+    const intervalId = setInterval(() => {
+      fetchHistoricalData();
+    }, 60000);
 
-        if (!detailResponse.data || !detailResponse.data.market_data) {
-          throw new Error('Invalid API response for crypto details');
-        }
-
-        setCryptoDetail(detailResponse.data);
-
-        // Fetch historical price data
-        const historyResponse = await axios.get<HistoricalData>(
-          `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart?vs_currency=usd&days=7&interval=daily`
-        );
-
-        if (!historyResponse.data || !historyResponse.data.prices) {
-          throw new Error('Invalid API response for historical data');
-        }
-
-        // Extract prices from the historical data
-        const prices = historyResponse.data.prices.map((price) => price[1]);
-        setHistoricalData(prices);
-      } catch (err: any) {
-        console.error('Error fetching crypto data:', err.message);
-        setError('Failed to load crypto details. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    // Cleanup function to clear the interval when the component unmounts
+    return () => clearInterval(intervalId);
   }, [cryptoId]);
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer,{backgroundColor: theme.backgroundColor}]}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundColor }]}>
         <ActivityIndicator size="large" color="#ffffff" />
-        <Text style={styles.loadingText}>Loading crypto details...</Text>
+        <Text style={styles.loadingText}>Chargement des données...</Text>
       </View>
     );
   }
@@ -83,59 +82,40 @@ const CryptoDetailScreen = () => {
     );
   }
 
-  if (!cryptoDetail) {
+  if (historicalData.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>No crypto details available.</Text>
+        <Text style={styles.errorText}>Aucune donnée historique disponible.</Text>
       </View>
     );
   }
 
-  // Generate labels for every 7th data point (one label per week)
-  const labels = Array.from({ length: historicalData.length }, (_, i) =>
-    i % 7 === 0 ? new Date(historicalData[i]).toLocaleDateString() : ''
-  );
+  const prices = historicalData.map(item => item.close);
+  const labels = historicalData.map(item => new Date(item.recordDate).toLocaleDateString());
 
   return (
-    <View style={[styles.container,{backgroundColor: theme.backgroundColor}]}>
-      <Text style={styles.title}>{cryptoDetail.name} ({cryptoDetail.symbol.toUpperCase()})</Text>
-      <Text style={styles.price}>Price: ${cryptoDetail.market_data.current_price.usd.toFixed(2)}</Text>
-      <Text
-        style={[
-          styles.variation,
-          cryptoDetail.market_data.price_change_percentage_24h > 0 ? styles.up : styles.down,
-        ]}
-      >
-        24h Change: {cryptoDetail.market_data.price_change_percentage_24h.toFixed(2)}%
-      </Text>
-
-      <Text style={styles.chartTitle}>7-Day Price History</Text>
-      {historicalData.length > 0 ? (
-        <LineChart
-          data={{
-            labels: labels,
-            datasets: [{ data: historicalData }],
-          }}
-          width={350}
-          height={220}
-          chartConfig={{
-            backgroundColor: '#1E1E1E', // Dark background
-            backgroundGradientFrom: '#1E1E1E',
-            backgroundGradientTo: '#1E1E1E',
-            decimalPlaces: 2,
-            color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`, // Blue line color
-            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // White labels
-            style: {
-              borderRadius: 16,
-            },
-          }}
-          bezier
-          style={styles.chart}
-        />
-      ) : (
-        <Text style={styles.errorText}>No historical price data available.</Text>
-      )}
-    </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      <Text style={styles.chartTitle}>Historique des prix</Text>
+      <LineChart
+        data={{
+          labels: labels,
+          datasets: [{ data: prices }],
+        }}
+        width={350}
+        height={220}
+        chartConfig={{
+          backgroundColor: '#1E1E1E',
+          backgroundGradientFrom: '#1E1E1E',
+          backgroundGradientTo: '#1E1E1E',
+          decimalPlaces: 2,
+          color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          style: { borderRadius: 16 },
+        }}
+        bezier
+        style={styles.chart}
+      />
+    </SafeAreaView>
   );
 };
 
@@ -143,7 +123,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#121212', // Dark mode background
+    backgroundColor: '#121212',
   },
   loadingContainer: {
     flex: 1,
@@ -164,28 +144,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff4d4d',
     textAlign: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#ffffff', // White text for dark mode
-  },
-  price: {
-    fontSize: 20,
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  variation: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  up: {
-    color: '#00ff00', // Green for positive change
-  },
-  down: {
-    color: '#ff0000', // Red for negative change
   },
   chartTitle: {
     fontSize: 18,

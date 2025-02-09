@@ -2,11 +2,12 @@
 import { Stack } from 'expo-router';
 import CryptoListScreen from '@/components/crypto/CryptoListScreen';
 import { useTheme } from '@/hooks/useTheme';
+import {SafeAreaView} from "react-native";
 
 const Crypto = () => {
     const theme = useTheme();
   return (
-    <>
+    <SafeAreaView>
       {/* Define the stack navigator */}
       <Stack>
         <Stack.Screen name="index" options={{ title: 'Cryptocurrencies' }} />
@@ -15,7 +16,7 @@ const Crypto = () => {
 
       {/* Render the CryptoListScreen */}
       <CryptoListScreen />
-    </>
+    </SafeAreaView>
   );
 };
 

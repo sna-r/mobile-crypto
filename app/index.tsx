@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage(null); // Clear previous errors
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       Alert.alert("Success", "Logged in successfully!");
       router.replace("/(tabs)/profile");
     } catch (error: any) {
@@ -78,6 +78,7 @@ export default function LoginPage() {
         placeholder="Entrez votre email"
         value={email}
         onChangeText={setEmail}
+        defaultValue="dylanqin4@gmail.com"
       />
 
       {/* Password Input */}
@@ -86,6 +87,7 @@ export default function LoginPage() {
         placeholder="Entrez votre mot de passe"
         value={password}
         onChangeText={setPassword}
+        defaultValue={"123456"}
       />
 
       {/* Email/Password Login Button */}
@@ -95,25 +97,25 @@ export default function LoginPage() {
         loading={loading}
       />
 
-      {/* OR Separator */}
-      <View style={styles.orContainer}>
-        <View style={styles.line} />
-        <Text style={styles.orText}>- OU -</Text>
-        <View style={styles.line} />
-      </View>
+      {/*/!* OR Separator *!/*/}
+      {/*<View style={styles.orContainer}>*/}
+      {/*  <View style={styles.line} />*/}
+      {/*  <Text style={styles.orText}>- OU -</Text>*/}
+      {/*  <View style={styles.line} />*/}
+      {/*</View>*/}
 
-      {/* Google Login Button with Logo */}
-      <TouchableOpacity
-        style={styles.googleButton}
-        onPress={handleGoogleLogin}
-        disabled={loading}
-      >
-        <Image
-          source={require("@/assets/images/google-icon.svg")}
-          style={styles.googleLogo}
-        />
-        <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
-      </TouchableOpacity>
+      {/*/!* Google Login Button with Logo *!/*/}
+      {/*<TouchableOpacity*/}
+      {/*  style={styles.googleButton}*/}
+      {/*  onPress={handleGoogleLogin}*/}
+      {/*  disabled={loading}*/}
+      {/*>*/}
+      {/*  <Image*/}
+      {/*    source={require("@/assets/images/google-icon.svg")}*/}
+      {/*    style={styles.googleLogo}*/}
+      {/*  />*/}
+      {/*  <Text style={styles.googleButtonText}>Se connecter avec Google</Text>*/}
+      {/*</TouchableOpacity>*/}
     </View>
   );
 }
