@@ -50,9 +50,9 @@ export default function Wallet(){
     return <View style={[styles.container, { backgroundColor }]}>
     {/* Main Balance Section */}
     <View style={styles.mainBalanceContainer}>
-      <Text style={[styles.mainBalanceTitle, { color: primaryTextColor }]}>Your Total Balance</Text>
+      <Text style={[styles.mainBalanceTitle, { color: primaryTextColor }]}>Votre solde</Text>
       <Text style={[styles.mainBalanceAmount, { color: accentColor }]}>$15,012.34</Text>
-      <Text style={[styles.mainBalanceSubtitle, { color: secondaryTextColor }]}>As of today</Text>
+      <Text style={[styles.mainBalanceSubtitle, { color: secondaryTextColor }]}>Aujourd'hui</Text>
     </View>
 
     {/* Cryptocurrency Balances Section */}
