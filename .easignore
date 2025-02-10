@@ -49,4 +49,3 @@ config/firebaseConfig.js
 # @end expo-cli
 
 /.idea
-google-services.json
