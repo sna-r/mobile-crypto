@@ -1,36 +1,41 @@
-// components/Profile.tsx
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, useColorScheme, Dimensions } from 'react-native';
+import React, { useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Alert,
+  useColorScheme,
+  Dimensions,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { auth } from '@/config/firebaseConfig'; // Import Firebase auth
+import { auth } from '@/config/firebaseConfig';
 import { router } from 'expo-router';
-
-// Sample static data for the user's profile
-const initialUserProfile = {
-  id: '1',
-  name: 'John Doe',
-  email: 'johndoe@example.com',
-  phone: '+1 123-456-7890',
-  bio: 'Blockchain enthusiast and crypto trader. Passionate about decentralized technologies.',
-  profilePictureUrl: 'https://randomuser.me/api/portraits/women/8.jpg', // Replace with your server URL
-};
+import { UserContext } from '@/app/_layout';
 
 export default function Profile() {
-  const colorScheme = useColorScheme(); // Detect system theme (dark or light)
+  const user = useContext(UserContext);
+  const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
-  // Define colors based on the system theme
+  // Définition des couleurs selon le thème
   const backgroundColor = isDarkMode ? '#1f2937' : '#ffffff';
   const primaryTextColor = isDarkMode ? '#e5e7eb' : '#1f2937';
   const secondaryTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
   const cardBackgroundColor = isDarkMode ? '#25292e' : '#f9fafb';
   const accentColor = isDarkMode ? '#ffd33d' : '#007bff';
 
-  // State to store the user's profile picture
-  const [profilePicture, setProfilePicture] = React.useState<string | null>(initialUserProfile.profilePictureUrl);
+  // Si l'utilisateur n'a pas d'URL de photo, on génère une image de robot via RoboHash
+  const defaultProfilePicture = `https://robohash.org/${user?.email || 'default'}?set=set1`;
 
-  // Function to pick an image from the gallery
+  // On initialise la photo de profil avec l'URL stockée dans le user ou la valeur par défaut
+  const [profilePicture, setProfilePicture] = React.useState<string | null>(
+    user && (user as any).profilePictureUrl ? (user as any).profilePictureUrl : defaultProfilePicture
+  );
+
+  // Fonction pour choisir une image depuis la galerie
   const pickImage = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -47,7 +52,7 @@ export default function Profile() {
     }
   };
 
-  // Function to take a picture using the camera
+  // Fonction pour prendre une photo avec la caméra
   const takePhoto = async () => {
     try {
       let result = await ImagePicker.launchCameraAsync({
@@ -64,7 +69,7 @@ export default function Profile() {
     }
   };
 
-  // Function to show the options for changing the profile picture
+  // Fonction pour proposer le choix de modifier la photo de profil
   const changeProfilePicture = () => {
     Alert.alert('Change Profile Picture', 'Choose an option:', [
       { text: 'Cancel', style: 'cancel' },
@@ -73,14 +78,12 @@ export default function Profile() {
     ]);
   };
 
-  // Function to handle logout
+  // Fonction de déconnexion
   const handleLogout = async () => {
     try {
-      await auth.signOut(); // Sign out the user
+      await auth.signOut();
       Alert.alert('Success', 'You have been logged out.');
       router.replace("/");
-      // Redirect to the login screen (update this path as needed)
-      // For example, navigate to the login screen using navigation
     } catch (error) {
       console.error('Error logging out:', error);
       Alert.alert('Error', 'Failed to log out.');
@@ -89,17 +92,15 @@ export default function Profile() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      {/* Profile Picture Section */}
+      {/* Section Photo de Profil */}
       <View style={styles.profilePictureContainer}>
-        {/* Profile Picture */}
         <TouchableOpacity onPress={changeProfilePicture} activeOpacity={0.8}>
           <Image
-            source={{ uri: profilePicture || initialUserProfile.profilePictureUrl }}
+            source={{ uri: profilePicture || defaultProfilePicture }}
             style={styles.profilePicture}
             resizeMode="cover"
           />
         </TouchableOpacity>
-        {/* Edit Icon */}
         <Ionicons
           name="pencil-outline"
           size={20}
@@ -107,33 +108,21 @@ export default function Profile() {
           style={styles.editIcon}
           onPress={changeProfilePicture}
         />
-        {/* User Name */}
-        <Text style={[styles.profileName, { color: primaryTextColor }]}>{initialUserProfile.name}</Text>
+        <Text style={[styles.profileName, { color: primaryTextColor }]}>
+          {user?.name || 'No Name'}
+        </Text>
       </View>
 
-      {/* User Information Section */}
+      {/* Section Information de l'Utilisateur */}
       <View style={[styles.userInfoContainer, { backgroundColor: cardBackgroundColor }]}>
-        {/* Email */}
         <View style={styles.infoRow}>
           <Ionicons name="mail-outline" size={20} color={accentColor} />
           <Text style={[styles.infoLabel, { color: secondaryTextColor }]}>Email</Text>
-          <Text style={[styles.infoValue, { color: primaryTextColor }]}>{initialUserProfile.email}</Text>
-        </View>
-        {/* Phone */}
-        <View style={styles.infoRow}>
-          <Ionicons name="call-outline" size={20} color={accentColor} />
-          <Text style={[styles.infoLabel, { color: secondaryTextColor }]}>Phone</Text>
-          <Text style={[styles.infoValue, { color: primaryTextColor }]}>{initialUserProfile.phone}</Text>
-        </View>
-        {/* Bio */}
-        <View style={styles.infoRow}>
-          <Ionicons name="person-outline" size={20} color={accentColor} />
-          <Text style={[styles.infoLabel, { color: secondaryTextColor }]}>Bio</Text>
-          <Text style={[styles.infoValue, { color: primaryTextColor }]}>{initialUserProfile.bio}</Text>
+          <Text style={[styles.infoValue, { color: primaryTextColor }]}>{user?.email}</Text>
         </View>
       </View>
 
-      {/* Logout Button */}
+      {/* Bouton de déconnexion */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Log Out</Text>
       </TouchableOpacity>
@@ -195,7 +184,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   logoutButton: {
-    backgroundColor: '#ff4d4d', // Red background for logout
+    backgroundColor: '#ff4d4d',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',

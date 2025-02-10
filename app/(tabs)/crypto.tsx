@@ -2,7 +2,7 @@
 import { Stack } from 'expo-router';
 import CryptoListScreen from '@/components/crypto/CryptoListScreen';
 import { useTheme } from '@/hooks/useTheme';
-import {SafeAreaView} from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const Crypto = () => {
     const theme = useTheme();
