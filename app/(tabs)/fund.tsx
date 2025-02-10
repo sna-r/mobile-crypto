@@ -1,45 +1,64 @@
-// TabPage.tsx
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import { View, TextInput, Pressable, StyleSheet, Dimensions, Text } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import Notification from '@/components/crypto/Notification'; // Import the Notification component
+import Notification from '@/components/crypto/Notification';
+import { db } from '@/config/firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
+import { UserContext } from '@/app/_layout';
 
 const TabPage: React.FC = () => {
+  const user = useContext(UserContext);
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState('');
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const theme = useTheme();
 
-  // Handle deposit or withdraw confirmation
-  const handleConfirm = () => {
+  const generateRandomId = () => Math.floor(Math.random() * (10000 - 2000 + 1)) + 2000;
+
+  // Fonction pour gérer la transaction
+  const handleTransaction = async () => {
     console.log('Input value:', amount);
     if (amount.trim() === '') {
-      setNotification({ message: 'Please enter an amount.', type: 'error' });
-      return;
-    }
-    const numericValue = parseFloat(amount);
-    if (isNaN(numericValue) || numericValue <= 0) {
-      setNotification({ message: 'Entrer une nombre valide.', type: 'error' });
+      setNotification({ message: 'Veuillez entrer un montant.', type: 'error' });
       return;
     }
 
-    const action = activeTab === 'deposit' ? 'deposer' : 'retirer';
-    setNotification({ message: `Vous avez ${action} $${amount}`, type: 'success' });
-    setAmount(''); // Clear the input after confirmation
+    const numericValue = parseFloat(amount);
+    if (isNaN(numericValue) || numericValue <= 0) {
+      setNotification({ message: 'Veuillez entrer un montant valide.', type: 'error' });
+      return;
+    }
+
+    const transactionTypeId = activeTab === 'deposit' ? 1 : 2;
+    const newTransaction = {
+      id: generateRandomId(),
+      amount: numericValue.toFixed(8), // Format en 8 décimales
+      status: 'PENDING',
+      transactionDate: new Date().toISOString(),
+      transactionTypeId: transactionTypeId,
+      userId: user?.id,
+    };
+
+    try {
+      await addDoc(collection(db, 'fundTransactions'), newTransaction);
+      setNotification({ message: `Transaction réussie: ${activeTab === 'deposit' ? 'Dépôt' : 'Retrait'} de $${amount}`, type: 'success' });
+      setAmount('');
+    } catch (error) {
+      console.error('Erreur lors de l’enregistrement de la transaction:', error);
+      setNotification({ message: 'Erreur lors de l’enregistrement de la transaction.', type: 'error' });
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
-      {/* Notification */}
       {notification && (
         <Notification
           message={notification.message}
           type={notification.type}
-          onClose={() => setNotification(null)} // Hide the notification
+          onClose={() => setNotification(null)}
         />
       )}
 
-      {/* Tab Buttons */}
       <View style={styles.tabContainer}>
         <Pressable
           style={({ pressed }) => [
@@ -65,16 +84,11 @@ const TabPage: React.FC = () => {
         </Pressable>
       </View>
 
-      {/* Content Based on Active Tab */}
       <View style={[styles.contentContainer, { backgroundColor: theme.isDarkMode ? '#1f2937' : '#ffffff' }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.textColor }]}>
-            {activeTab === 'deposit' ? 'Dépôt' : 'Retrait'}
-          </Text>
+          <Text style={[styles.title, { color: theme.textColor }]}>{activeTab === 'deposit' ? 'Dépôt' : 'Retrait'}</Text>
           <Text style={[styles.subtitle, { color: theme.placeholderTextColor }]}>
-            {activeTab === 'deposit'
-              ? 'Ajouter des fonds à votre compte'
-              : 'Retirer des fonds de votre compte'}
+            {activeTab === 'deposit' ? 'Ajouter des fonds à votre compte' : 'Retirer des fonds de votre compte'}
           </Text>
         </View>
         <View style={styles.formContainer}>
@@ -92,7 +106,7 @@ const TabPage: React.FC = () => {
           />
           <Pressable
             style={[styles.confirmButton, { backgroundColor: theme.buttonColor }]}
-            onPress={handleConfirm}
+            onPress={handleTransaction}
             disabled={amount.trim() === ''}
           >
             <Text style={[styles.confirmButtonText, { color: '#ffffff' }]}>

@@ -1,33 +1,69 @@
 // app/_layout.tsx
-import React, { useEffect, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
-import { auth } from "@/config/firebaseConfig";
+import { auth, db } from "@/config/firebaseConfig";
 import { View, Text } from "react-native";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { User } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+
+export interface AppUser {
+  id: string;
+  email: string;
+  name: string;
+  roles: string[];
+}
+
+export const UserContext = createContext<AppUser | null>(null);
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const [user, setUser] = useState(null); // State to track the authenticated user
-  const [isLoading, setIsLoading] = useState(true); // Loading state for auth check
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fonction pour récupérer l'utilisateur Firestore à partir de son email
+  const fetchAppUser = async (email: string) => {
+    try {
+      const q = query(collection(db, "users"), where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const userData = doc.data();
+        const fetchedUser: AppUser = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          roles: userData.roles
+        };
+        console.log("Utilisateur Firestore récupéré :", fetchedUser);
+        setAppUser(fetchedUser);
+      } else {
+        setAppUser(null);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'utilisateur Firestore :", error);
+      setAppUser(null);
+    }
+  };
 
   useEffect(() => {
-    // Subscribe to the authentication state
-    const unsubscribe = auth.onAuthStateChanged((authUser) => {
+    const unsubscribe = auth.onAuthStateChanged((authUser: User | null) => {
       if (authUser) {
-        setUser(authUser); // User is logged in
+        if (authUser.email) {
+          fetchAppUser(authUser.email);
+        }
       } else {
-        setUser(null); // User is not logged in
+        setAppUser(null);
       }
-      setIsLoading(false); // Mark loading as complete
+      setIsLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup the listener on unmount
+    return () => unsubscribe();
   }, []);
 
   if (isLoading) {
-    // Show a loading indicator while checking the authentication state
+    // Affiche un écran de chargement pendant la vérification de l'authentification
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Text>Loading...</Text>
@@ -36,23 +72,18 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <UserContext.Provider value={appUser}>
       <QueryClientProvider client={queryClient}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          {/* Conditionally render screens based on authentication state */}
-          {user ? (
-            // If the user is logged in, show the tabs
+        <Stack screenOptions={{ headerShown: false }}>
+          {appUser ? (
+            // Si un utilisateur Firestore est trouvé, on affiche les onglets
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           ) : (
-            // If the user is not logged in, show the login screen
+            // Sinon, on affiche la page de login
             <Stack.Screen name="index" options={{ headerShown: false }} />
           )}
         </Stack>
       </QueryClientProvider>
-    </GestureHandlerRootView>
+    </UserContext.Provider>
   );
 }
