@@ -10,8 +10,8 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("user2@exemple.com");
-  const [password, setPassword] = useState("Firebase2025");
+  const [email, setEmail] = useState("dylanqin4@gmail.com");
+  const [password, setPassword] = useState("123456");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
