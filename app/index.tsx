@@ -10,8 +10,8 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("user2@exemple.com");
+  const [password, setPassword] = useState("Firebase2025");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -61,6 +61,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+  
 
   return (
     <View style={styles.container}>
