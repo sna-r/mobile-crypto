@@ -1,20 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, useColorScheme , Dimensions} from 'react-native';
+// components/Profile.tsx
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, useColorScheme, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { auth } from '@/config/firebaseConfig'; // Import Firebase auth
+import { router } from 'expo-router';
 
 // Sample static data for the user's profile
 const initialUserProfile = {
-    id: '1',
-    name: 'John Doe',
-    email: 'johndoe@example.com',
-    phone: '+1 123-456-7890',
-    bio: 'Blockchain enthusiast and crypto trader. Passionate about decentralized technologies.',
-    profilePictureUrl: 'https://randomuser.me/api/portraits/women/8.jpg', // Replace with your server URL
-  };
+  id: '1',
+  name: 'John Doe',
+  email: 'johndoe@example.com',
+  phone: '+1 123-456-7890',
+  bio: 'Blockchain enthusiast and crypto trader. Passionate about decentralized technologies.',
+  profilePictureUrl: 'https://randomuser.me/api/portraits/women/8.jpg', // Replace with your server URL
+};
 
-export default function Profile(){
-    const colorScheme = useColorScheme(); // Detect system theme (dark or light)
+export default function Profile() {
+  const colorScheme = useColorScheme(); // Detect system theme (dark or light)
   const isDarkMode = colorScheme === 'dark';
 
   // Define colors based on the system theme
@@ -25,7 +28,7 @@ export default function Profile(){
   const accentColor = isDarkMode ? '#ffd33d' : '#007bff';
 
   // State to store the user's profile picture
-  const [profilePicture, setProfilePicture] = useState<string | null>(initialUserProfile.profilePictureUrl);
+  const [profilePicture, setProfilePicture] = React.useState<string | null>(initialUserProfile.profilePictureUrl);
 
   // Function to pick an image from the gallery
   const pickImage = async () => {
@@ -36,7 +39,6 @@ export default function Profile(){
         aspect: [1, 1],
         quality: 1,
       });
-
       if (!result.canceled) {
         setProfilePicture(result.assets[0].uri);
       }
@@ -54,7 +56,6 @@ export default function Profile(){
         aspect: [1, 1],
         quality: 1,
       });
-
       if (!result.canceled) {
         setProfilePicture(result.assets[0].uri);
       }
@@ -70,6 +71,20 @@ export default function Profile(){
       { text: 'Take Photo', onPress: takePhoto },
       { text: 'Choose from Gallery', onPress: pickImage },
     ]);
+  };
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      await auth.signOut(); // Sign out the user
+      Alert.alert('Success', 'You have been logged out.');
+      router.replace("/");
+      // Redirect to the login screen (update this path as needed)
+      // For example, navigate to the login screen using navigation
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to log out.');
+    }
   };
 
   return (
@@ -104,14 +119,12 @@ export default function Profile(){
           <Text style={[styles.infoLabel, { color: secondaryTextColor }]}>Email</Text>
           <Text style={[styles.infoValue, { color: primaryTextColor }]}>{initialUserProfile.email}</Text>
         </View>
-
         {/* Phone */}
         <View style={styles.infoRow}>
           <Ionicons name="call-outline" size={20} color={accentColor} />
           <Text style={[styles.infoLabel, { color: secondaryTextColor }]}>Phone</Text>
           <Text style={[styles.infoValue, { color: primaryTextColor }]}>{initialUserProfile.phone}</Text>
         </View>
-
         {/* Bio */}
         <View style={styles.infoRow}>
           <Ionicons name="person-outline" size={20} color={accentColor} />
@@ -119,60 +132,78 @@ export default function Profile(){
           <Text style={[styles.infoValue, { color: primaryTextColor }]}>{initialUserProfile.bio}</Text>
         </View>
       </View>
+
+      {/* Logout Button */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const screenHeight = Dimensions.get('window').height;
+
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 20,
-    },
-    profilePictureContainer: {
-      alignItems: 'center',
-      marginBottom: 20,
-      position: 'relative',
-      marginTop: screenHeight * 0.1,
-    },
-    profilePicture: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      borderColor: '#fff',
-      borderWidth: 2,
-      marginBottom: 10,
-    },
-    editIcon: {
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-      backgroundColor: '#007bff',
-      borderRadius: 20,
-      padding: 5,
-    },
-    profileName: {
-      fontSize: 20,
-      fontWeight: 'bold',
-    },
-    userInfoContainer: {
-      padding: 20,
-      borderRadius: 8,
-      marginBottom: 20,
-    },
-    infoRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 15,
-    },
-    infoLabel: {
-      marginLeft: 10,
-      marginRight: 10,
-      fontSize: 14,
-      fontWeight: 'bold',
-    },
-    infoValue: {
-      flex: 1,
-      fontSize: 14,
-    },
-  });
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  profilePictureContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    position: 'relative',
+    marginTop: screenHeight * 0.1,
+  },
+  profilePicture: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderColor: '#fff',
+    borderWidth: 2,
+    marginBottom: 10,
+  },
+  editIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#007bff',
+    borderRadius: 20,
+    padding: 5,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  userInfoContainer: {
+    padding: 20,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  infoLabel: {
+    marginLeft: 10,
+    marginRight: 10,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 14,
+  },
+  logoutButton: {
+    backgroundColor: '#ff4d4d', // Red background for logout
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  logoutButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});

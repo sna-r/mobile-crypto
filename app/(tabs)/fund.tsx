@@ -1,86 +1,112 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, useColorScheme , Dimensions} from 'react-native';
+import React, {useContext, useState} from 'react';
+import { View, TextInput, Pressable, StyleSheet, Dimensions, Text } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
+import Notification from '@/components/crypto/Notification';
+import { db } from '@/config/firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
+import { UserContext } from '@/app/_layout';
 
 const TabPage: React.FC = () => {
+  const user = useContext(UserContext);
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState('');
-  const colorScheme = useColorScheme(); // Detect system theme (dark or light)
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const theme = useTheme();
 
-  // Handle deposit or withdraw confirmation
-  const handleConfirm = () => {
+  const generateRandomId = () => Math.floor(Math.random() * (10000 - 2000 + 1)) + 2000;
+
+  // Fonction pour gérer la transaction
+  const handleTransaction = async () => {
+    console.log('Input value:', amount);
     if (amount.trim() === '') {
-      alert('Please enter an amount.');
+      setNotification({ message: 'Veuillez entrer un montant.', type: 'error' });
       return;
     }
-    alert(`You have ${activeTab}ed $${amount}`);
-    setAmount(''); // Clear the input after confirmation
+
+    const numericValue = parseFloat(amount);
+    if (isNaN(numericValue) || numericValue <= 0) {
+      setNotification({ message: 'Veuillez entrer un montant valide.', type: 'error' });
+      return;
+    }
+
+    const transactionTypeId = activeTab === 'deposit' ? 1 : 2;
+    const newTransaction = {
+      id: generateRandomId(),
+      amount: numericValue.toFixed(8), // Format en 8 décimales
+      status: 'PENDING',
+      transactionDate: new Date().toISOString(),
+      transactionTypeId: transactionTypeId,
+      userId: user?.id,
+    };
+
+    try {
+      await addDoc(collection(db, 'fundTransactions'), newTransaction);
+      setNotification({ message: `Transaction réussie: ${activeTab === 'deposit' ? 'Dépôt' : 'Retrait'} de $${amount}`, type: 'success' });
+      setAmount('');
+    } catch (error) {
+      console.error('Erreur lors de l’enregistrement de la transaction:', error);
+      setNotification({ message: 'Erreur lors de l’enregistrement de la transaction.', type: 'error' });
+    }
   };
 
-  // Determine colors based on the system theme
-  
-  const isDarkMode = colorScheme === 'dark';//change to dark or light , still need a test on a device with dark or light mode
-  const backgroundColor = isDarkMode ? '#1f2937' : '#ffffff';
-  const textColor = isDarkMode ? '#e5e7eb' : '#1f2937';
-  const borderColor = isDarkMode ? '#374151' : '#d1d5db';
-  const buttonColor = isDarkMode ? '#3b82f6' : '#007bff';
-  const placeholderTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
-
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      {/* Tab Buttons */}
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
       <View style={styles.tabContainer}>
         <Pressable
           style={({ pressed }) => [
             styles.tabButton,
             activeTab === 'deposit' && styles.activeTab,
             pressed && styles.pressedTab,
-            { backgroundColor: activeTab === 'deposit' ? buttonColor : borderColor },
+            { backgroundColor: activeTab === 'deposit' ? theme.buttonColor : theme.borderColor },
           ]}
           onPress={() => setActiveTab('deposit')}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'deposit' ? '#ffffff' : textColor }]}>Dépôt</Text>
+          <Text style={[styles.tabText, { color: activeTab === 'deposit' ? '#ffffff' : theme.textColor }]}>Dépôt</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
             styles.tabButton,
             activeTab === 'withdraw' && styles.activeTab,
             pressed && styles.pressedTab,
-            { backgroundColor: activeTab === 'withdraw' ? buttonColor : borderColor },
+            { backgroundColor: activeTab === 'withdraw' ? theme.buttonColor : theme.borderColor },
           ]}
           onPress={() => setActiveTab('withdraw')}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'withdraw' ? '#ffffff' : textColor }]}>Retrait</Text>
+          <Text style={[styles.tabText, { color: activeTab === 'withdraw' ? '#ffffff' : theme.textColor }]}>Retrait</Text>
         </Pressable>
       </View>
 
-      {/* Content Based on Active Tab */}
-      <View style={[styles.contentContainer, { backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', borderColor }]}>
+      <View style={[styles.contentContainer, { backgroundColor: theme.isDarkMode ? '#1f2937' : '#ffffff' }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: textColor }]}>
-            {activeTab === 'deposit' ? 'Dépôt' : 'Retrait'}
-          </Text>
-          <Text style={[styles.subtitle, { color: placeholderTextColor }]}>
-            {activeTab === 'deposit'
-              ? 'Ajouter des fonds à votre compte'
-              : 'Retirer des fonds de votre compte'}
+          <Text style={[styles.title, { color: theme.textColor }]}>{activeTab === 'deposit' ? 'Dépôt' : 'Retrait'}</Text>
+          <Text style={[styles.subtitle, { color: theme.placeholderTextColor }]}>
+            {activeTab === 'deposit' ? 'Ajouter des fonds à votre compte' : 'Retirer des fonds de votre compte'}
           </Text>
         </View>
         <View style={styles.formContainer}>
-          <Text style={[styles.label, { color: textColor }]}>Montant</Text>
+          <Text style={[styles.label, { color: theme.textColor }]}>Montant</Text>
           <TextInput
             style={[
               styles.input,
-              { borderColor: isDarkMode ? '#374151' : '#d1d5db', backgroundColor: isDarkMode ? '#374151' : '#ffffff' },
+              { borderColor: theme.isDarkMode ? '#374151' : '#d1d5db', backgroundColor: theme.isDarkMode ? '#374151' : '#ffffff' },
             ]}
             placeholder="Entrer le montant"
-            placeholderTextColor={placeholderTextColor}
+            placeholderTextColor={theme.placeholderTextColor}
             inputMode="decimal"
             value={amount}
             onChangeText={setAmount}
           />
           <Pressable
-            style={[styles.confirmButton, { backgroundColor: buttonColor }]}
-            onPress={handleConfirm}
+            style={[styles.confirmButton, { backgroundColor: theme.buttonColor }]}
+            onPress={handleTransaction}
             disabled={amount.trim() === ''}
           >
             <Text style={[styles.confirmButtonText, { color: '#ffffff' }]}>
@@ -94,6 +120,7 @@ const TabPage: React.FC = () => {
 };
 
 const screenHeight = Dimensions.get('window').height;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
