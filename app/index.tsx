@@ -109,7 +109,9 @@ export default function LoginPage() {
         disabled={loading}
       >
         <Image
-          source={require("@/assets/images/google-icon.svg")}
+          source={{
+            uri: "https://ik.imagekit.io/sna/google-icon-logo-svgrepo-com.svg"
+          }}
           style={styles.googleLogo}
         />
         <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
