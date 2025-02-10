@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, Text, View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import {
+  FlatList,
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  useColorScheme
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/config/firebaseConfig';
@@ -29,10 +38,13 @@ export default function CryptoListScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [prices, setPrices] = useState<Record<string, LatestPrice>>({});
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
 
   const backgroundColor = '#ffffff';
   const primaryTextColor = '#1f2937';
   const cardBackgroundColor = '#f9fafb';
+  const accentColor = isDarkMode ? '#ffd33d' : '#007bff';
 
   useEffect(() => {
     const fetchCryptos = async () => {
@@ -114,9 +126,10 @@ export default function CryptoListScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text style={{ color: '#292929' }}>Chargement...</Text>
-      </SafeAreaView>
+      <View style={[styles.loadingContainer, { backgroundColor }]}>
+        <ActivityIndicator size="large" color={accentColor} />
+        <Text style={{ color: primaryTextColor }}>Chargement...</Text>
+      </View>
     );
   }
 
